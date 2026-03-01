@@ -4,6 +4,16 @@ set tabstop=4
 set shiftwidth=4
 set autoindent
 
+set swapfile
+set backup
+set writebackup
+set undofile
+
+set directory^=$HOME/.cache/vim/swap//
+set backupdir^=$HOME/.cache/vim/backup//
+set undodir^=$HOME/.cache/vim/undo//
+
+
 call plug#begin('~/.vim/plugged')
 
 Plug 'preservim/nerdtree'
