@@ -36,5 +36,5 @@ cp -R "$repo/dot_config/private_jrnl/." "$chez/dot_config/private_jrnl/"
 cp -R "$repo/dot_config/opencode/." "$chez/dot_config/opencode/"
 
 if [ "${1:-}" = "--ssh" ]; then
-  sh "$repo/setup_ssh.sh"
+  bash "$repo/setup_ssh.sh"
 fi
