@@ -1,2 +1,6 @@
 [git]
-autoCommit = true
+autoAdd = true
+autoCommit = false
+autoPush = false
+
+
