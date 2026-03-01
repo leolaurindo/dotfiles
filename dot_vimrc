@@ -1,0 +1,16 @@
+set relativenumber
+set number
+set tabstop=4
+set shiftwidth=4
+set autoindent
+
+call plug#begin('~/.vim/plugged')
+
+Plug 'preservim/nerdtree'
+Plug 'ghifarit53/tokyonight-vim'
+Plug 'catppuccin/vim', { 'as': 'catppuccin' }
+call plug#end()
+
+nnoremap <C-n> :NERDTreeToggle<CR>
+set termguicolors
+colorscheme tokyonight
