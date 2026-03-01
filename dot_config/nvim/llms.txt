@@ -1,0 +1,44 @@
+# Project Overview
+
+- `README.md` - Repo purpose, install/sync flow, and script reference.
+- `sync.sh`/`sync.cmd` - Copy `init.lua` (and `lazy-lock.json` when present) from active Neovim config into this repo.
+- `install.sh`/`install.cmd` - Install `init.lua`, `lua/`, `lazy-lock.json`, and `llms.txt` into the platform Neovim config directory.
+- `commit.sh`/`commit.bat` - Helper scripts to `git add -A`, commit, and push this repo.
+- `scripts/setup_nvim_venv.sh` and `jupyter_setup.md` - Python host/Jupyter setup helpers for Molten/Jupytext workflows.
+- `init.lua` - Thin entrypoint that only loads `require("config")`; all logic lives under `lua/config` and `lua/plugins`.
+- `lua/config/init.lua` - Runtime orchestrator. It loads core settings, bootstraps lazy.nvim, loads plugin specs, then loads feature modules.
+- `lua/plugins/init.lua` - Aggregates plugin specs from domain files and enforces a fixed plugin load order.
+
+# Config Map
+
+- `lua/config/core.lua` - Base editor behavior (leaders, options, clipboard, startup cwd handling, cache/state paths).
+- `lua/config/globals.lua` - Shared global toggles and helper functions used across modules (notably cmp docs window sizing).
+- `lua/config/formatting.lua` - Format-on-save behavior, including Go organize imports + format and Ruff-based Python formatting.
+- `lua/config/diagnostics.lua` - Diagnostic defaults and toggle commands (`InlineDiagnosticsToggle`, `DiagUnderlineToggle`, `DiagSignsToggle`, `Diag`).
+- `lua/config/commands.lua` - Utility commands (`Ct`, `Cclear`, `Lazygit`, `RenameFile`, `Term`, `Refresh`) plus cursor-hold diagnostic float behavior.
+- `lua/config/filetypes.lua` - Filetype autocmds and local mappings (Diffview/Fugitive/markdown/alpha + visual macro helper).
+- `lua/config/jupyter.lua` - Jupyter/Molten lifecycle: kernel discovery/init, run cell/all, export, doctor checks, and related autocmd hooks.
+- `lua/config/keymaps.lua` - Non-AI global keymaps and neo-tree commands. Jupyter keymaps call exported functions from `config.jupyter`.
+- `lua/config/ai.lua` - AI/completion runtime controls and keymaps (Copilot/Sidekick/cmp/noice/signature toggles).
+- `lua/config/leader_help.lua` - Dynamic `<leader><family>?` helper popup for keymap families.
+- `lua/config/ui.lua` - Winbar breadcrumbs, theme/map/outline/typewriter commands, and colorscheme tweaks.
+
+# Plugin Domains
+
+- `lua/plugins/ui.lua` - Visual/UI plugins (themes, lualine, noice/notify, aerial/navic, dashboard, zen, etc.).
+- `lua/plugins/editor.lua` - Editing UX plugins (autopairs, comment, flash, mini modules, snacks, oil, neo-tree).
+- `lua/plugins/treesitter.lua` - Treesitter parser and highlighting configuration.
+- `lua/plugins/git.lua` - Git workflow plugins (gitsigns, fugitive, diffview).
+- `lua/plugins/ai.lua` - AI assistant plugins (opencode, sidekick, copilot).
+- `lua/plugins/lsp.lua` - LSP stack, Mason, cmp, trouble, and server-specific behavior.
+- `lua/plugins/dap.lua` - Debugging plugin setup.
+- `lua/plugins/lint.lua` - Linting integration.
+- `lua/plugins/test.lua` - Test runner integration.
+- `lua/plugins/jupyter.lua` - Notebook/Jupyter-related plugins (molten/image/obsidian integration).
+- `lua/plugins/session.lua` - Session persistence behavior.
+
+# Key Coupling Notes
+
+- `lua/plugins/lsp.lua` and `lua/config/ai.lua` both depend on helpers from `lua/config/globals.lua`.
+- `lua/config/keymaps.lua` depends on exported functions from `lua/config/jupyter.lua`.
+- `Refresh` command in `lua/config/commands.lua` clears `config.*` and `plugins.*` module cache before re-sourcing `init.lua`.

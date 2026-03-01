@@ -1,0 +1,3 @@
+cmd q quit
+map e $${EDITOR:-nvim} "$f"
+map <enter> $${EDITOR:-nvim} "$f"
