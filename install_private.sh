@@ -3,7 +3,7 @@ set -eu
 
 repo="$HOME/dotfiles-private"
 chez="$HOME/.local/share/chezmoi"
-repo_slug="leolaurindo/dotfiles-private"
+repo_name="leolaurindo/dotfiles-private"
 
 if ! command -v gh >/dev/null 2>&1; then
   echo "GitHub CLI (gh) is not installed."
@@ -38,3 +38,7 @@ cp -R "$repo/dot_config/opencode/." "$chez/dot_config/opencode/"
 if [ "${1:-}" = "--ssh" ]; then
   bash "$repo/setup_ssh.sh"
 fi
+
+# cleanup
+
+rm -rf "$repo"
