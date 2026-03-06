@@ -83,6 +83,30 @@ local function neo_tree_float_preview()
   end)
 end
 
+local function neo_tree_focus_from_preview()
+  local ok_manager, manager = pcall(require, "neo-tree.sources.manager")
+  if ok_manager then
+    local ok_state, state = pcall(manager.get_state, "filesystem")
+    if ok_state and state and state.winid and vim.api.nvim_win_is_valid(state.winid) then
+      vim.api.nvim_set_current_win(state.winid)
+      return
+    end
+  end
+
+  local current = vim.api.nvim_get_current_win()
+  for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if winid ~= current and vim.api.nvim_win_is_valid(winid) then
+      local bufnr = vim.api.nvim_win_get_buf(winid)
+      if vim.bo[bufnr].filetype == "neo-tree" then
+        vim.api.nvim_set_current_win(winid)
+        return
+      end
+    end
+  end
+
+  vim.cmd("wincmd p")
+end
+
 vim.api.nvim_create_user_command("NeoTreeFilesystem", function()
   neo_tree_exec({
     source = "filesystem",
@@ -119,6 +143,18 @@ end, { desc = "Neo-tree filesystem (float)" })
 
 vim.api.nvim_create_user_command("NeoTreeFloatPreview", neo_tree_float_preview, {
   desc = "Neo-tree float with preview",
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "neo-tree-preview",
+  callback = function(args)
+    vim.keymap.set("n", "<Esc>", neo_tree_focus_from_preview, {
+      buffer = args.buf,
+      silent = true,
+      nowait = true,
+      desc = "Focus neo-tree",
+    })
+  end,
 })
 
 local function toggle_markdown_conceal()

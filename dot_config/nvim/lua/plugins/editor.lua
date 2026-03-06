@@ -736,6 +736,153 @@ M["stevearc/oil.nvim"] = {
     },
   }
 
+local neo_tree_line_count_cache = {}
+local neo_tree_binary_ext = {
+  ["7z"] = true,
+  ["a"] = true,
+  ["avi"] = true,
+  ["bin"] = true,
+  ["bmp"] = true,
+  ["bz2"] = true,
+  ["class"] = true,
+  ["dat"] = true,
+  ["db"] = true,
+  ["dll"] = true,
+  ["doc"] = true,
+  ["docx"] = true,
+  ["dylib"] = true,
+  ["ear"] = true,
+  ["exe"] = true,
+  ["flac"] = true,
+  ["gif"] = true,
+  ["gz"] = true,
+  ["ico"] = true,
+  ["iso"] = true,
+  ["jar"] = true,
+  ["jpeg"] = true,
+  ["jpg"] = true,
+  ["lib"] = true,
+  ["mkv"] = true,
+  ["mov"] = true,
+  ["mp3"] = true,
+  ["mp4"] = true,
+  ["o"] = true,
+  ["obj"] = true,
+  ["odt"] = true,
+  ["ogg"] = true,
+  ["otf"] = true,
+  ["pdf"] = true,
+  ["png"] = true,
+  ["ppt"] = true,
+  ["pptx"] = true,
+  ["pyc"] = true,
+  ["rar"] = true,
+  ["so"] = true,
+  ["sqlite"] = true,
+  ["tar"] = true,
+  ["ttf"] = true,
+  ["war"] = true,
+  ["wav"] = true,
+  ["webm"] = true,
+  ["webp"] = true,
+  ["woff"] = true,
+  ["woff2"] = true,
+  ["xls"] = true,
+  ["xlsx"] = true,
+  ["xz"] = true,
+  ["zip"] = true,
+  ["zst"] = true,
+}
+
+local function neo_tree_count_lines(path, max_lines)
+  local uv = vim.uv or vim.loop
+  if not uv or not path or path == "" then
+    return nil, false
+  end
+
+  local fd = uv.fs_open(path, "r", 438)
+  if not fd then
+    return nil, false
+  end
+
+  local chunk_size = 32768
+  local offset = 0
+  local count = 0
+  local saw_data = false
+  local last_byte = ""
+
+  while true do
+    local chunk = uv.fs_read(fd, chunk_size, offset)
+    if type(chunk) ~= "string" or chunk == "" then
+      break
+    end
+
+    saw_data = true
+    local _, newlines = chunk:gsub("\n", "")
+    count = count + newlines
+    last_byte = chunk:sub(-1)
+    offset = offset + #chunk
+
+    if max_lines and count > max_lines then
+      uv.fs_close(fd)
+      return max_lines, true
+    end
+  end
+
+  uv.fs_close(fd)
+
+  if saw_data and last_byte ~= "\n" then
+    count = count + 1
+  end
+
+  if max_lines and count > max_lines then
+    return max_lines, true
+  end
+
+  return count, false
+end
+
+local function neo_tree_is_text_candidate(path, ext, max_bytes)
+  local uv = vim.uv or vim.loop
+  if not uv or not path or path == "" then
+    return false
+  end
+
+  if ext and ext ~= "" and neo_tree_binary_ext[ext] then
+    return false
+  end
+
+  local stat = uv.fs_stat(path)
+  if not stat then
+    return false
+  end
+
+  if max_bytes and stat.size and stat.size > max_bytes then
+    return false
+  end
+
+  local fd = uv.fs_open(path, "r", 438)
+  if not fd then
+    return false
+  end
+  local sample = uv.fs_read(fd, 4096, 0)
+  uv.fs_close(fd)
+
+  if type(sample) ~= "string" then
+    return false
+  end
+
+  return sample:find("\0", 1, true) == nil
+end
+
+local function neo_tree_line_cell(text, width)
+  local value = tostring(text or "-")
+  if #value > width then
+    value = value:sub(1, width)
+  end
+  return string.format("%" .. width .. "s  ", value)
+end
+
 M["nvim-neo-tree/neo-tree.nvim"] = {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
@@ -750,12 +897,137 @@ M["nvim-neo-tree/neo-tree.nvim"] = {
       popup_border_style = "rounded",
       enable_git_status = true,
       enable_diagnostics = true,
+      default_component_configs = {
+        file_size = {
+          enabled = false,
+        },
+        line_count = {
+          enabled = true,
+          width = 8,
+          required_width = 72,
+          max_lines = 200000,
+          max_bytes = 5 * 1024 * 1024,
+        },
+      },
       filesystem = {
         follow_current_file = {
           enabled = true,
           leave_dirs_open = false,
         },
         use_libuv_file_watcher = true,
+        components = {
+          line_count = function(config, node, state)
+            local width = config.width or 8
+            if not state or state.current_position ~= "float" then
+              return {}
+            end
+            if node:get_depth() == 1 then
+              return {
+                text = neo_tree_line_cell("Lines", width),
+                highlight = "NeoTreeStatsHeader",
+              }
+            end
+
+            if node.type ~= "file" then
+              return {
+                text = neo_tree_line_cell("-", width),
+                highlight = "NeoTreeStats",
+              }
+            end
+
+            local ext = ""
+            if type(node.ext) == "string" then
+              ext = node.ext:lower()
+            elseif type(node.name) == "string" then
+              ext = (node.name:match("%.([^.]+)$") or ""):lower()
+            end
+
+            local path = node.path
+            local uv = vim.uv or vim.loop
+            local stat = uv and path and uv.fs_stat(path) or nil
+            local mtime = stat and stat.mtime and stat.mtime.sec or 0
+            local size = stat and stat.size or 0
+            local cache_key = type(path) == "string" and path or nil
+
+            local cached = cache_key and neo_tree_line_count_cache[cache_key] or nil
+            if cached and cached.mtime == mtime and cached.size == size then
+              return {
+                text = neo_tree_line_cell(cached.display, width),
+                highlight = "NeoTreeStats",
+              }
+            end
+
+            local display = "-"
+            if neo_tree_is_text_candidate(path, ext, config.max_bytes) then
+              local count, capped = neo_tree_count_lines(path, config.max_lines)
+              if count then
+                display = capped and (tostring(count) .. "+") or tostring(count)
+              end
+            end
+
+            if cache_key then
+              neo_tree_line_count_cache[cache_key] = {
+                mtime = mtime,
+                size = size,
+                display = display,
+              }
+            end
+
+            return {
+              text = neo_tree_line_cell(display, width),
+              highlight = "NeoTreeStats",
+            }
+          end,
+        },
+        renderers = {
+          directory = {
+            { "indent" },
+            { "icon" },
+            { "current_filter" },
+            {
+              "container",
+              content = {
+                { "name", zindex = 10 },
+                {
+                  "symlink_target",
+                  zindex = 10,
+                  highlight = "NeoTreeSymbolicLinkTarget",
+                },
+                { "clipboard", zindex = 10 },
+                { "diagnostics", errors_only = true, zindex = 20, align = "right", hide_when_expanded = true },
+                { "git_status", zindex = 10, align = "right", hide_when_expanded = true },
+                { "line_count", zindex = 10, align = "right" },
+                { "type", zindex = 10, align = "right" },
+                { "last_modified", zindex = 10, align = "right" },
+                { "created", zindex = 10, align = "right" },
+              },
+            },
+          },
+          file = {
+            { "indent" },
+            { "icon" },
+            {
+              "container",
+              content = {
+                { "name", zindex = 10 },
+                {
+                  "symlink_target",
+                  zindex = 10,
+                  highlight = "NeoTreeSymbolicLinkTarget",
+                },
+                { "clipboard", zindex = 10 },
+                { "bufnr", zindex = 10 },
+                { "modified", zindex = 20, align = "right" },
+                { "diagnostics", zindex = 20, align = "right" },
+                { "git_status", zindex = 10, align = "right" },
+                { "line_count", zindex = 10, align = "right" },
+                { "type", zindex = 10, align = "right" },
+                { "last_modified", zindex = 10, align = "right" },
+                { "created", zindex = 10, align = "right" },
+              },
+            },
+          },
+        },
       },
       window = {
         position = "right",
