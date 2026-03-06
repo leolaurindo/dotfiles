@@ -171,23 +171,23 @@ install_system_packages() {
   case "$pm" in
     apt)
       required_packages=(git curl ca-certificates tar gzip unzip xz-utils zsh tmux ripgrep fd-find python3 python3-venv python3-pip golang-go)
-      optional_packages=(lazygit lf wslu imagemagick xclip wl-clipboard xsel nodejs npm cargo clang clangd golangci-lint ueberzugpp build-essential)
+      optional_packages=(lazygit lf tree wslu imagemagick xclip wl-clipboard xsel nodejs npm cargo clang clangd golangci-lint ueberzugpp build-essential)
       ;;
     dnf)
       required_packages=(git curl ca-certificates tar gzip unzip xz zsh tmux ripgrep fd-find python3 python3-pip golang)
-      optional_packages=(lazygit lf ImageMagick xclip wl-clipboard nodejs npm cargo clang clang-tools-extra golangci-lint ueberzugpp gcc gcc-c++ make)
+      optional_packages=(lazygit lf tree ImageMagick xclip wl-clipboard nodejs npm cargo clang clang-tools-extra golangci-lint ueberzugpp gcc gcc-c++ make)
       ;;
     pacman)
       required_packages=(git curl ca-certificates tar gzip unzip xz zsh tmux ripgrep fd python python-pip go)
-      optional_packages=(lazygit lf imagemagick xclip wl-clipboard xsel nodejs npm rust clang base-devel)
+      optional_packages=(lazygit lf tree imagemagick xclip wl-clipboard xsel nodejs npm rust clang base-devel)
       ;;
     zypper)
       required_packages=(git curl ca-certificates tar gzip unzip xz zsh tmux ripgrep fd python3 python3-pip go)
-      optional_packages=(lazygit lf ImageMagick xclip wl-clipboard nodejs npm rust clang-tools gcc gcc-c++ make)
+      optional_packages=(lazygit lf tree ImageMagick xclip wl-clipboard nodejs npm rust clang-tools gcc gcc-c++ make)
       ;;
     brew)
       required_packages=(git curl ca-certificates gnu-tar gzip unzip xz zsh tmux ripgrep fd python go)
-      optional_packages=(lazygit lf imagemagick node rust)
+      optional_packages=(lazygit lf tree imagemagick node rust)
       ;;
   esac
 
