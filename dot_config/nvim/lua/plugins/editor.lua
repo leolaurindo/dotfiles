@@ -127,6 +127,35 @@ M["nvim-mini/mini.move"] = {
     end,
   }
 
+M["folke/todo-comments.nvim"] = {
+    "folke/todo-comments.nvim",
+    event = "VeryLazy",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {
+      signs = false,
+    },
+    config = function(_, opts)
+      local todo = require("todo-comments")
+      todo.setup(opts)
+      -- Keep todo-comments as an on-demand list/jump tool only.
+      todo.disable()
+    end,
+    keys = {
+      { "<leader>xt", "<cmd>TodoTrouble<CR>", desc = "Todo list (Trouble)" },
+      { "<leader>xT", "<cmd>TodoQuickFix<CR>", desc = "Todo list (quickfix)" },
+      {
+        "<leader>fT",
+        function()
+          require("snacks.picker").todo_comments({
+            cwd = vim.uv.cwd(),
+            focus = "list",
+          })
+        end,
+        desc = "Todos (Snacks)",
+      },
+    },
+  }
+
 M["folke/snacks.nvim"] = {
     "folke/snacks.nvim",
     lazy = false,
@@ -352,6 +381,36 @@ M["folke/snacks.nvim"] = {
         return opts
       end
 
+      local function current_git_branch()
+        if #vim.fs.find(".git", { path = vim.uv.cwd(), upward = true, type = "directory", limit = 1 }) == 0 then
+          return nil
+        end
+        local out = vim.trim(vim.fn.systemlist("git branch --show-current")[1] or "")
+        if vim.v.shell_error ~= 0 or out == "" then
+          return nil
+        end
+        return out
+      end
+
+      local function latest_workspace_scratch()
+        local cwd = vim.fs.normalize(assert(vim.uv.cwd()))
+        local branch = current_git_branch()
+        local latest_cwd = nil
+
+        for _, item in ipairs(snacks.scratch.list()) do
+          if item.cwd == cwd then
+            if branch and item.branch == branch then
+              return item
+            end
+            if not latest_cwd then
+              latest_cwd = item
+            end
+          end
+        end
+
+        return latest_cwd
+      end
+
       vim.keymap.set("n", "<C-p>", function()
         picker.commands()
       end, { silent = true })
@@ -359,8 +418,34 @@ M["folke/snacks.nvim"] = {
         picker.files()
       end, { silent = true, desc = "Find files" })
       vim.keymap.set("n", "<leader>..", function()
+        local latest = latest_workspace_scratch()
+        if latest then
+          snacks.scratch.open({
+            icon = latest.icon,
+            file = latest.file,
+            name = latest.name,
+            ft = latest.ft,
+          })
+          return
+        end
+        snacks.scratch.open({
+          filekey = {
+            cwd = true,
+            branch = true,
+            count = false,
+          },
+        })
+      end, { silent = true, desc = "Scratch latest (workspace)" })
+      vim.keymap.set("n", "<leader>.;", function()
         snacks.picker.scratch({
           focus = "list",
+          win = {
+            list = {
+              keys = {
+                ["<C-x>"] = "scratch_delete",
+              },
+            },
+          },
         })
       end, { silent = true, desc = "Scratch list" })
       vim.keymap.set("n", "<leader>.n", function()

@@ -154,6 +154,27 @@ M["folke/noice.nvim"] = {
     },
   }
 
+M["folke/which-key.nvim"] = {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    opts = {
+      preset = "modern",
+      plugins = {
+        spelling = false,
+      },
+      win = {
+        border = "single",
+      },
+    },
+    config = function(_, opts)
+      local wk = require("which-key")
+      wk.setup(opts)
+      wk.add({
+        { "<leader>.", group = "Scratch" },
+      })
+    end,
+  }
+
 M["stevearc/aerial.nvim"] = {
     "stevearc/aerial.nvim",
     dependencies = {

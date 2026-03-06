@@ -109,7 +109,7 @@ local function register_leader_family_help_maps()
   -- Keep this list explicit to avoid accidental single-key leader groups
   -- (like <leader>e) getting a `?` helper and to avoid startup map scanning.
   -- Add new families here when you intentionally introduce grouped mappings.
-  local families = { "a", "d", "f", "g", "j", "q", "t", "u", "x" }
+  local families = { ".", "a", "d", "f", "g", "j", "q", "t", "u", "x" }
 
   for _, family in ipairs(families) do
     local _, entries = collect_leader_family_entries(family)
