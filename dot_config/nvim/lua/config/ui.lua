@@ -75,6 +75,11 @@ vim.api.nvim_create_user_command("Theme", function()
   require("snacks").picker.colorschemes()
 end, { desc = "Colorscheme picker" })
 
+vim.api.nvim_create_user_command("ThemeConfig", function()
+  local path = vim.fn.stdpath("config") .. "/lua/config/theme.lua"
+  vim.cmd.edit(vim.fn.fnameescape(path))
+end, { desc = "Edit startup theme config" })
+
 local onedark_styles = { "dark", "darker", "cool", "deep", "warm", "warmer", "light" }
 
 vim.api.nvim_create_user_command("OneDark", function(opts)
@@ -215,7 +220,11 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 -- === Colorscheme ===
--- default theme: tokyonight (same as your current)
-vim.cmd.colorscheme("tokyonight-night")
--- vim.cmd.colorscheme("catppuccin-mocha") -- optional: quick switch target
+local startup_theme = require("config.theme").default or "tokyonight-night"
+local ok = pcall(vim.cmd.colorscheme, startup_theme)
+if not ok then
+  vim.notify(("Failed to load startup theme '%s', falling back to tokyonight-night"):format(startup_theme), vim.log.levels.WARN)
+  vim.cmd.colorscheme("tokyonight-night")
+end
+
 apply_tokyonight_line_numbers()
