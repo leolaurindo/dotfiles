@@ -64,40 +64,4 @@ M["benlubas/molten-nvim"] = {
     end,
   }
 
-M["epwalsh/obsidian.nvim"] = {
-    "epwalsh/obsidian.nvim",
-    version = "*",
-    ft = "markdown",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-    opts = {
-      workspaces = {
-        {
-          name = "dynamic",
-          path = function()
-            local bufname = vim.api.nvim_buf_get_name(0)
-            if bufname and bufname ~= "" then
-              return assert(vim.fs.dirname(bufname))
-            end
-            return assert(vim.fn.getcwd())
-          end,
-          overrides = {
-            notes_subdir = vim.NIL,
-            new_notes_location = "current_dir",
-            templates = {
-              folder = vim.NIL,
-            },
-            disable_frontmatter = true,
-          },
-        },
-      },
-      completion = {
-        nvim_cmp = true,
-        min_chars = 2,
-      },
-      mappings = {},
-    },
-  }
-
 return M

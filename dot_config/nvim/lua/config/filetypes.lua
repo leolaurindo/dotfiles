@@ -17,8 +17,13 @@ vim.api.nvim_create_autocmd("FileType", {
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function()
-    vim.opt_local.conceallevel = 2
-    vim.opt_local.concealcursor = "nc"
+    vim.opt_local.conceallevel = 0
+    vim.opt_local.concealcursor = ""
+
+    local ok_render_markdown, render_markdown = pcall(require, "render-markdown")
+    if ok_render_markdown and type(render_markdown.buf_disable) == "function" then
+      render_markdown.buf_disable()
+    end
   end,
 })
 

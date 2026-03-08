@@ -9,6 +9,7 @@ local modules = {
   require("plugins.lint"),
   require("plugins.test"),
   require("plugins.jupyter"),
+  require("plugins.notes"),
   require("plugins.session"),
 }
 
@@ -46,6 +47,7 @@ local ordered_repos = {
   "lewis6991/gitsigns.nvim",
   "tpope/vim-fugitive",
   "sindrets/diffview.nvim",
+  "yujinyuz/gitpad.nvim",
   "nvim-lualine/lualine.nvim",
   "folke/snacks.nvim",
   "3rd/image.nvim",
