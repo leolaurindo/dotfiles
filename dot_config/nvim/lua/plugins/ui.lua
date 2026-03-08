@@ -28,6 +28,24 @@ M["Mofiqul/dracula.nvim"] = { "Mofiqul/dracula.nvim", lazy = true }
 
 M["marko-cerovac/material.nvim"] = { "marko-cerovac/material.nvim", lazy = true }
 
+M["shaunsingh/nord.nvim"] = { "shaunsingh/nord.nvim", lazy = true }
+
+M["Mofiqul/vscode.nvim"] = { "Mofiqul/vscode.nvim", lazy = true }
+
+M["AlexvZyl/nordic.nvim"] = { "AlexvZyl/nordic.nvim", lazy = true }
+
+M["olivercederborg/poimandres.nvim"] = { "olivercederborg/poimandres.nvim", lazy = true }
+
+M["dgox16/oldworld.nvim"] = { "dgox16/oldworld.nvim", lazy = true }
+
+M["thesimonho/kanagawa-paper.nvim"] = { "thesimonho/kanagawa-paper.nvim", lazy = true }
+
+M["embark-theme/vim"] = { "embark-theme/vim", lazy = true }
+
+M["Yazeed1s/oh-lucy.nvim"] = { "Yazeed1s/oh-lucy.nvim", lazy = true }
+
+M["kvrohit/substrata.nvim"] = { "kvrohit/substrata.nvim", lazy = true }
+
 M["nvim-lualine/lualine.nvim"] = {
     "nvim-lualine/lualine.nvim",
     name = "lualine",

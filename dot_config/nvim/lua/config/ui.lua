@@ -75,6 +75,58 @@ vim.api.nvim_create_user_command("Theme", function()
   require("snacks").picker.colorschemes()
 end, { desc = "Colorscheme picker" })
 
+local onedark_styles = { "dark", "darker", "cool", "deep", "warm", "warmer", "light" }
+
+vim.api.nvim_create_user_command("OneDark", function(opts)
+  local function apply(style)
+    local ok = pcall(vim.cmd.colorscheme, "onedark-" .. style)
+    if ok then
+      return
+    end
+
+    local loaded = pcall(function()
+      require("lazy").load({ plugins = { "onedark.nvim" } })
+    end)
+    if not loaded then
+      vim.notify("Failed to load onedark.nvim", vim.log.levels.ERROR)
+      return
+    end
+
+    local ok_theme, onedark = pcall(require, "onedark")
+    if not ok_theme then
+      vim.notify("onedark.nvim is not available", vim.log.levels.ERROR)
+      return
+    end
+
+    vim.o.background = style == "light" and "light" or "dark"
+    onedark.setup({ style = style })
+    onedark.load()
+  end
+
+  if opts.args == "" then
+    vim.ui.select(onedark_styles, { prompt = "OneDark style" }, function(choice)
+      if choice then
+        apply(choice)
+      end
+    end)
+    return
+  end
+
+  local style = string.lower(vim.trim(opts.args))
+  if not vim.tbl_contains(onedark_styles, style) then
+    vim.notify(("Invalid OneDark style: %s"):format(opts.args), vim.log.levels.ERROR)
+    return
+  end
+
+  apply(style)
+end, {
+  nargs = "?",
+  complete = function()
+    return onedark_styles
+  end,
+  desc = "Apply OneDark style",
+})
+
 vim.api.nvim_create_user_command("Maps", function()
   Snacks.picker.keymaps()
 end, { desc = "Keymaps picker" })
