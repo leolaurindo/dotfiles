@@ -84,11 +84,6 @@ local onedark_styles = { "dark", "darker", "cool", "deep", "warm", "warmer", "li
 
 vim.api.nvim_create_user_command("OneDark", function(opts)
   local function apply(style)
-    local ok = pcall(vim.cmd.colorscheme, "onedark-" .. style)
-    if ok then
-      return
-    end
-
     local loaded = pcall(function()
       require("lazy").load({ plugins = { "onedark.nvim" } })
     end)

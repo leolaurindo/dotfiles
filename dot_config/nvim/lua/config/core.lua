@@ -38,6 +38,82 @@ vim.opt.shiftwidth = 4
 vim.opt.autoindent = true
 vim.opt.termguicolors = true
 vim.opt.guicursor = "a:block"
+
+local forced_mode_cursors = {
+  "n:block-blinkwait0-blinkon0-blinkoff0",
+  "i:block-blinkwait0-blinkon0-blinkoff0",
+}
+local forced_modes = {
+  n = true,
+  i = true,
+}
+
+local function enforce_mode_block_cursor()
+  local current = vim.o.guicursor
+  if current == "" then
+    vim.opt.guicursor = table.concat(forced_mode_cursors, ",")
+    return
+  end
+
+  local updated = {}
+  for _, part in ipairs(vim.split(current, ",", { plain = true, trimempty = true })) do
+    local modes, args = part:match("^([^:]+):(.*)$")
+    if not modes then
+      table.insert(updated, part)
+    else
+      local kept_modes = {}
+      for _, mode in ipairs(vim.split(modes, "-", { plain = true, trimempty = true })) do
+        if not forced_modes[mode] then
+          table.insert(kept_modes, mode)
+        end
+      end
+
+      if #kept_modes > 0 then
+        table.insert(updated, table.concat(kept_modes, "-") .. ":" .. args)
+      end
+    end
+  end
+
+  for _, part in ipairs(forced_mode_cursors) do
+    table.insert(updated, part)
+  end
+  local next_value = table.concat(updated, ",")
+  if next_value ~= current then
+    vim.opt.guicursor = next_value
+  end
+end
+
+local applying_insert_block_cursor = false
+local insert_cursor_group = vim.api.nvim_create_augroup("ForceInsertBlockCursor", { clear = true })
+
+vim.api.nvim_create_autocmd({ "VimEnter", "ColorScheme" }, {
+  group = insert_cursor_group,
+  callback = function()
+    if applying_insert_block_cursor then
+      return
+    end
+    applying_insert_block_cursor = true
+    enforce_mode_block_cursor()
+    applying_insert_block_cursor = false
+  end,
+})
+
+vim.api.nvim_create_autocmd("OptionSet", {
+  group = insert_cursor_group,
+  pattern = "guicursor",
+  callback = function()
+    if applying_insert_block_cursor then
+      return
+    end
+
+    applying_insert_block_cursor = true
+    vim.schedule(function()
+      pcall(enforce_mode_block_cursor)
+      applying_insert_block_cursor = false
+    end)
+  end,
+})
+
 vim.opt.cmdheight = 1
 vim.opt.wildmode = "longest:full,full"
 vim.opt.wildoptions = "pum"
